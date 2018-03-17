@@ -1,0 +1,10 @@
+[Unit]
+Description=HTTPS Proxy with Autocert
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+ExecStart=/opt/rninja/rninja
+Restart=always
+TimeoutStopSec=5
