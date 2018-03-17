@@ -16,16 +16,10 @@ import (
 var certCache autocert.DirCache = "/opt/repository.ninja/certs"
 
 // NewRedirectServer to handle redirects to HTTPS.
-func NewRedirectServer() *http.Server {
+func NewRedirectServer(handler http.Handler) *http.Server {
 	s := &http.Server{
-		Addr: ":http",
-		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			url := r.URL
-			// In all other cases handle redirect ot HTTPS.
-			url.Host = r.Host
-			url.Scheme = "https"
-			http.Redirect(w, r, url.String(), http.StatusMovedPermanently)
-		}),
+		Addr:    ":http",
+		Handler: handler,
 	}
 	return s
 }
@@ -50,7 +44,7 @@ func main() {
 
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 
-	rs := NewRedirectServer()
+	rs := NewRedirectServer(m.HTTPHandler(nil))
 	go func() {
 		errChan <- rs.ListenAndServe()
 	}()
