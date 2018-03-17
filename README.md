@@ -6,8 +6,9 @@ Installation:
 `go get -u github.com/cooldarkdryplace/rninja`
 
 To install as a systemd service copy `rninja.service` file to your `/etc/systemd/services/` folder. Update `Environment` variables.
-Enable it: `systemctl enable rninja`
-Start it: `systemctl start rninja`
-Check it: `systemctl status rninja`
+
+* Enable it: `systemctl enable rninja`
+* Start it: `systemctl start rninja`
+* Check it: `systemctl status rninja`
 
 Enjoy.
