@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -24,7 +25,28 @@ func NewRedirectServer(handler http.Handler) *http.Server {
 	return s
 }
 
+var client = &http.Client{}
+
+func proxy(w http.ResponseWriter, r *http.Request) {
+	r.Host = "127.0.0.1:8080"
+	r.URL.Host = r.Host
+	r.URL.Scheme = "http"
+
+	resp, err := client.Do(r)
+	if err != nil {
+		w.WriteHeader(resp.StatusCode)
+		return
+	}
+	defer resp.Body.Close()
+
+	if _, err := io.Copy(w, resp.Body); err != nil {
+		log.Println("Failed to proxy response: %s", err)
+	}
+}
+
 func main() {
+	http.HandleFunc("/", proxy)
+
 	m := autocert.Manager{
 		Cache:      certCache,
 		Prompt:     autocert.AcceptTOS,
@@ -64,5 +86,7 @@ func main() {
 	defer cancel()
 
 	go rs.Shutdown(ctx)
-	log.Fatal(s.Shutdown(ctx))
+	if err := s.Shutdown(ctx); err != nil {
+		log.Fatalf("Graceful shutdown failed: %s", err)
+	}
 }
