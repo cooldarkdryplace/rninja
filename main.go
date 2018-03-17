@@ -14,7 +14,34 @@ import (
 	"golang.org/x/crypto/acme/autocert"
 )
 
-var certCache autocert.DirCache = "/opt/repository.ninja/certs"
+var transport = &http.Transport{}
+
+const (
+	defaultCertCache  autocert.DirCache = "/opt/repository.ninja/certs"
+	defaultTargetHost                   = "127.0.0.1:8080"
+)
+
+var (
+	certCache  = autocert.DirCache(os.Getenv("CERT_CACHE_DIR"))
+	targetHost = os.Getenv("TARGET")
+	domain     = os.Getenv("DOMAIN")
+)
+
+func init() {
+	if domain == "" {
+		log.Fatal("DOMAIN environment variable not set.")
+	}
+
+	if certCache == "" {
+		log.Printf("WARNING: Using default cache folder: %s", defaultCertCache)
+		certCache = defaultCertCache
+	}
+	if targetHost == "" {
+		log.Printf("WARNING: Using default target host: %s", defaultTargetHost)
+		targetHost = defaultTargetHost
+	}
+
+}
 
 // NewRedirectServer to handle redirects to HTTPS.
 func NewRedirectServer(handler http.Handler) *http.Server {
@@ -25,10 +52,8 @@ func NewRedirectServer(handler http.Handler) *http.Server {
 	return s
 }
 
-var transport = &http.Transport{}
-
 func proxy(w http.ResponseWriter, r *http.Request) {
-	r.Host = "127.0.0.1:8080"
+	r.Host = targetHost
 	r.URL.Host = r.Host
 	r.URL.Scheme = "http"
 	r.RequestURI = ""
@@ -60,7 +85,7 @@ func main() {
 	m := autocert.Manager{
 		Cache:      certCache,
 		Prompt:     autocert.AcceptTOS,
-		HostPolicy: autocert.HostWhitelist("repository.ninja"),
+		HostPolicy: autocert.HostWhitelist(domain),
 	}
 
 	s := &http.Server{

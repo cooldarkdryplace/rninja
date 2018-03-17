@@ -6,5 +6,10 @@ WantedBy=multi-user.target
 
 [Service]
 ExecStart=/opt/rninja/rninja
+
 Restart=always
 TimeoutStopSec=5
+
+Environment="TARGET=127.0.0.1:8080"
+Environment="DOMAIN=example.com"
+Environment="CERT_CACHE_DIR=/opt/rninja/certs"
