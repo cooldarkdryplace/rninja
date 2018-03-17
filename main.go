@@ -25,19 +25,29 @@ func NewRedirectServer(handler http.Handler) *http.Server {
 	return s
 }
 
-var client = &http.Client{}
+var transport = &http.Transport{}
 
 func proxy(w http.ResponseWriter, r *http.Request) {
 	r.Host = "127.0.0.1:8080"
 	r.URL.Host = r.Host
 	r.URL.Scheme = "http"
+	r.RequestURI = ""
 
-	resp, err := client.Do(r)
+	resp, err := transport.RoundTrip(r)
 	if err != nil {
-		w.WriteHeader(resp.StatusCode)
+		log.Printf("Proxy error: %s", err)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	defer resp.Body.Close()
+
+	for k, vs := range resp.Header {
+		for _, v := range vs {
+			w.Header().Add(k, v)
+		}
+	}
+
+	w.WriteHeader(resp.StatusCode)
 
 	if _, err := io.Copy(w, resp.Body); err != nil {
 		log.Println("Failed to proxy response: %s", err)
