@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -68,6 +69,9 @@ func proxy(w http.ResponseWriter, r *http.Request) {
 
 	for k, vs := range resp.Header {
 		for _, v := range vs {
+			if k == "Location" {
+				v = strings.Replace(v, "http://"+targetHost, "https://"+domain, 1)
+			}
 			w.Header().Add(k, v)
 		}
 	}
