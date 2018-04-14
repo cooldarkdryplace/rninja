@@ -1,5 +1,6 @@
 [Unit]
 Description=HTTPS Proxy with Autocert
+After=syslog.target network.target
 
 [Install]
 WantedBy=multi-user.target
