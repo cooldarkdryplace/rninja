@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
 	"io"
 	"log"
 	"net/http"
@@ -79,7 +78,7 @@ func proxy(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(resp.StatusCode)
 
 	if _, err := io.Copy(w, resp.Body); err != nil {
-		log.Println("Failed to proxy response: %s", err)
+		log.Printf("Failed to proxy response: %s", err)
 	}
 }
 
@@ -89,13 +88,13 @@ func main() {
 	m := autocert.Manager{
 		Cache:      certCache,
 		Prompt:     autocert.AcceptTOS,
-		HostPolicy: autocert.HostWhitelist(domain),
+		HostPolicy: autocert.HostWhitelist(domain, "www."+domain),
 	}
 
 	s := &http.Server{
 		Addr:      ":https",
 		Handler:   http.DefaultServeMux,
-		TLSConfig: &tls.Config{GetCertificate: m.GetCertificate},
+		TLSConfig: m.TLSConfig(),
 	}
 
 	var (
